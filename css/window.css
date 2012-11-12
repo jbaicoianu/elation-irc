@@ -1,0 +1,41 @@
+.elation_irc_window {
+  border: 1px solid black;
+  box-shadow: 1px 1px 10px rgba(0,0,0,1);
+  width: auto;
+  margin: 1em;
+  background: rgba(0,0,0,.60);
+  overflow: hidden;
+  color: white;
+  border-radius: 4px;
+  line-height: 1.3em;
+}
+.elation_irc_window_titlebar {
+  border-bottom: 1px solid black;
+  background: #99a;
+  padding: .2em .5em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  color: #333;
+}
+.elation_irc_window_titlebar .elation_irc_topic:before {
+  content: '-';
+  padding: 0 .5em;
+}
+.elation_irc_window_titlebar .elation_irc_topic {
+}
+.elation_irc_window_content {
+  position: relative;
+}
+
+/* active state */
+.elation_irc_window.elation_state_active {
+  border: 1px solid goldenrod;
+  background: rgba(0,0,0,.75);
+}
+.elation_irc_window.elation_state_active .elation_irc_window_titlebar {
+  background: #009;
+  color: white;
+}
+.elation_irc_window.elation_state_active .elation_irc_input {
+}

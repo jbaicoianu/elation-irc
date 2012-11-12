@@ -1,0 +1,16 @@
+.elation_irc_nicklist {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 10em;
+  border-left: 1px solid black;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: rgba(255,255,255,.1);
+}
+.elation_irc_nicklist ul {
+  margin: 0;
+  padding: .5em;
+  list-style: none;
+}

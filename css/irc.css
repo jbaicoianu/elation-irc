@@ -1,0 +1,13 @@
+body {
+  background: #ddd url(/images/games/random_grey_variations.png);
+  margin: 0;
+}
+.elation_irc_client {
+  font-family: monospace;
+}
+a {
+  color: #6d7b8d;
+}
+a:visited {
+  color: #806d7e;
+}
