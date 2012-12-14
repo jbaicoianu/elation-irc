@@ -13,7 +13,7 @@
 {dependency name="irc.nicklist"}
 
 <div class="elation_irc_client" elation:component="irc.client">
-  {component name="irc.connect" nick=$nick}
+  {component name="irc.connect" host=$host nick=$nick}
 </div>
 
 {set var="page.title"}ripIRC v0.1{/set}
