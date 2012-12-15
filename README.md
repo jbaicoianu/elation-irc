@@ -6,6 +6,8 @@ Elation IRC is a scriptable web-based client/server relay written in JavaScript 
 Architecture
 ============
 
+![Elation IRC Architecture](http://meobets.com/~bai/elation-irc.png)
+
 Client component runs in the browser, and establishes a websocket connection to the server.
 
 Server component runs in Node.js, and acts as a relay between websockets and TCP sockets.  When a client issues a BNCCONNECT command, the server will establish a TCP connection to the specified server.  As long a a client is connected, it will act as a bidirectional relay.  If all clients disconnect, the server will maintain connection and respond to ping requests.  Clients can reconnect and resume the session at any time in the future.
