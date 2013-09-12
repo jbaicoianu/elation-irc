@@ -7,7 +7,6 @@
   overflow: hidden;
   color: white;
   border-radius: 4px;
-  line-height: 1.3em;
 }
 .elation_irc_window_titlebar {
   border-bottom: 1px solid black;
@@ -29,13 +28,13 @@
 }
 
 /* active state */
-.elation_irc_window.elation_state_active {
+.elation_irc_window.state_active {
   border: 1px solid goldenrod;
   background: rgba(0,0,0,.75);
 }
-.elation_irc_window.elation_state_active .elation_irc_window_titlebar {
+.elation_irc_window.state_active .elation_irc_window_titlebar {
   background: #009;
   color: white;
 }
-.elation_irc_window.elation_state_active .elation_irc_input {
+.elation_irc_window.state_active .elation_irc_input {
 }

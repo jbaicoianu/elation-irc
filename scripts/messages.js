@@ -1,5 +1,5 @@
 if (typeof require != 'undefined') {
-  var elation = require("elation");
+  var elation = require("utils/elation");
 }
 elation.component.add("irc.messages", function() {
   this.init = function() {
@@ -71,8 +71,8 @@ elation.extend("irc.message", function(server, raw, channel) {
     return this;
   }
   this.setchannel = function(channel) {
-    this.channel = (channel instanceof elation.irc.channel ? channel : this.server.getchannel(channel));;
-console.log('msg setchannel:', this.channel);
+    this.channel = (channel instanceof elation.irc.channel ? channel : this.server.getchannel(channel));
+    console.log('msg setchannel:', this.channel);
     return this.channel;
   }
   this.getTimestamp = function() {

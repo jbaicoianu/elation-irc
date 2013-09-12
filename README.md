@@ -15,4 +15,17 @@ Basic IRC protocol is handled by scripts/server.js, and from there all events an
 Scripts are also written in javascript, and can define their own templates, event handlers, and commands.  (eg: scripts/script-default.js scripts/script-test.js).  Scripts can be loaded, unloaded, and reloaded on the fly without having to refresh by using the built-in /script command.
 
 
+client
+------
+elation.irc.client
+  - scripts-default
+  - scripts-client
+
+
+server
+------
+elation.irc.relay
+  - scripts-default
+  - scripts-relay
+
 

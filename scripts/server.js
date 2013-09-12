@@ -1,3 +1,5 @@
+elation.require(['irc.script-default']);
+
 elation.extend("irc.server", function(client, host, port, ssl) {
   this.client = client;
   this.host = host;
@@ -21,38 +23,32 @@ elation.extend("irc.server", function(client, host, port, ssl) {
 
     this.channel = new elation.irc.channel(this, host);
     this.client.getwindow(this.channel);
-    var websockify = false;
-    if (websockify) {
-      this.socket = new Websock();
-      this.socket.open("ws://meobets.com:8888/");
-      this.socket.on("open", elation.bind(this, this.ws_open));
-      this.socket.on("close", elation.bind(this, this.ws_close));
-      this.socket.on("message", elation.bind(this, this.ws_message));
-    } else {
-      this.recvbuf = '';
-      this.socket = new WebSocket('ws://meobets.com:8888/');
-      elation.events.add(this.socket, "open,message,close", this);
-    }
+
+    this.recvbuf = '';
+    this.websock = new WebSocket('ws://meobets.com:8888/');
+    elation.events.add(this.websock, "open", elation.bind(this, this.websockopen));
+    elation.events.add(this.websock, "message", elation.bind(this, this.websockmessage));
+    elation.events.add(this.websock, "close", elation.bind(this, this.websockclose));
   }
   this.handleEvent = function(ev) {
     if (typeof this[ev.type] == "function") {
       return this[ev.type](ev);
     }
   }
-  this.open = function(ev) {
+  this.websockopen = function(ev) {
     console.log('connection opened', ev);
     this.connected = true;
     var msg = new elation.irc.message(this, "connect :Connection established");
     //this.send("HEYO " + this.self.nick + " " + this.host + " " + this.port);
     this.dispatchmessage("server", msg);
   }
-  this.close = function(ev) {
+  this.websockclose = function(ev) {
     console.log('connection closed', ev);
     this.connected = false;
     var msg = new elation.irc.message(this, "disconnect :Lost connection", this.serverwindow);
     this.dispatchmessage("server", msg);
   }
-  this.message = function(ev) {
+  this.websockmessage = function(ev) {
     this.recvbuf += ev.data;
     var nlpos = 0, lastpos = 0;
     while ((nlpos = this.recvbuf.indexOf('\r\n', lastpos)) != -1) {;
@@ -61,35 +57,10 @@ elation.extend("irc.server", function(client, host, port, ssl) {
     }
     this.recvbuf = this.recvbuf.substring(lastpos);
   }
-  this.ws_open = function(ev) {
-    this.open(ev);
-  }
-  this.ws_close = function(ev) {
-    this.close(ev);
-  }
-  this.ws_message = function(ev) {
-    var rQ, rQi, i;
-
-    while (this.socket.rQlen() > 1) {
-      rQ = this.socket.get_rQ();
-      rQi = this.socket.get_rQi();
-      for (i = rQi; i < rQ.length; i++) {
-        if (rQ[i] === 10) {
-            break;
-        }
-      }
-      if (i >= rQ.length) {
-        // No line break found
-        break;
-      }
-      var line = this.socket.rQshiftStr((i-rQi) + 1);
-      this.processmessage(line.trim());
-    }
-  }
   this.send = function(data) {
-    if (this.socket) {
+    if (this.websock) {
       console.log('send: ', data);
-      this.socket.send(data + "\r\n");
+      this.websock.send(data + "\r\n");
     }
   }
   this.processmessage = function(msg) {

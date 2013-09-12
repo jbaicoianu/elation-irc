@@ -1,7 +1,8 @@
 if (typeof require != 'undefined') {
-  var elation = require("elation"),
+  var elation = require("utils/elation"),
       ws = require("ws"),
       net = require('net');
+  require('utils/events');
   require('irc/messages');
 }
 
@@ -9,24 +10,24 @@ elation.extend("irc.relay", function() {
   this.users = {};
   this.pending = [];
   this.init = function() {
-    this.sockserver = new ws.Server({host: "meobets.com", port: 8888});
-    this.sockserver.on('connection', elation.bind(this, this.handleconnect));
+    this.websockserver = new ws.Server({host: "meobets.com", port: 8888});
+    this.websockserver.on('connection', elation.bind(this, this.handleconnect));
   }
 
-  this.handleconnect = function(sock) {
-    console.log('connection');
-    var client = new elation.irc.relay.client(this, sock);
+  this.handleconnect = function(websock) {
+    console.log('client connected: ', websock.upgradeReq.client.remoteAddress);
+    var client = new elation.irc.relay.client(this, websock);
     elation.events.add(client, "clientauth", elation.bind(this, this.clientauth));
     this.pending.push(client);
   }
   this.clientauth = function(ev) {
-console.log('clientauth', ev.data);
     var client = ev.target;
     var auth = ev.data;
     var i = this.pending.indexOf(client);
     if (i != -1) {
       this.pending.splice(i, 1);
       if (!this.users[auth.user]) {
+        console.log("client authorized: " + client.websock.upgradeReq.client.remoteAddress + " => " + auth.user);
         this.users[auth.user] = new elation.irc.relay.user(auth);
       }
       this.users[auth.user].addclient(client);
@@ -37,30 +38,30 @@ console.log('clientauth', ev.data);
   this.init();
 });
 
-elation.extend("irc.relay.client", function(server, sock) {
+elation.extend("irc.relay.client", function(server, websock) {
   this.pending = true;
   this.server = server;
-  this.sock = sock;
+  this.websock = websock;
   this.auth = {};
   this.requirepassword = false;
   this.queue = [];
   
   this.init = function() {
     console.log('new relay client');
-    if (this.sock) {
-      this.sock.on("message", elation.bind(this, this.handlemessage));
-      this.sock.on("close", elation.bind(this, this.handleclose));
+    if (this.websock) {
+      this.websock.on("message", elation.bind(this, this.handlemessage));
+      this.websock.on("close", elation.bind(this, this.handleclose));
     }
   } 
   this.send = function(msg) {
-    if (this.sock) {
-      console.log('client sock send: ' + msg.raw);
-      this.sock.send(msg.raw);
+    if (this.websock) {
+      console.log('client send:\n\t' + msg.raw.replace(/\n/gm, "\n\t").trim());
+      this.websock.send(msg.raw);
     }
   }
   this.handlemessage = function(msgstr) {
     var msg = new elation.irc.message(this.server, msgstr.toString('utf8'));
-    console.log('client message: ', msg.raw);
+    console.log('client receive:\n\t' + msg.raw.replace(/\n/gm, "\n\t").trim());
     switch (msg.command) {
       case 'heyo':
         //this.server.completeconnection(this, msg.args);
@@ -87,7 +88,8 @@ elation.extend("irc.relay.client", function(server, sock) {
 elation.extend("irc.relay.server", function(host, port, auth) {
   this.host = host;
   this.port = port;
-  this.sock = false;
+  this.tcpsock = false;
+  this.reconnectdelay = 5000;
 
   this.init = function() {
     if (this.host && this.port) {
@@ -95,28 +97,54 @@ elation.extend("irc.relay.server", function(host, port, auth) {
     }
   }
   this.connect = function() {
-    console.log('connect to server: ' + this.host + ':' + this.port);
-    this.sock = net.connect({host: this.host, port: this.port}, elation.bind(this, this.handleconnect));
-    this.sock.on('data', elation.bind(this, this.handledata));
-  }
-  this.send = function(data) {
-    if (this.sock) {
-      var str = (data instanceof elation.irc.message ? data.raw : data);
-      console.log('server send: ' + str);
-      this.sock.write(str + '\r\n');
+    if (this.reconnecttimer) {
+      clearTimeout(this.reconnecttimer);
+      this.reconnecttimer = false;
+    }
+    if (!this.tcpsock || !this.tcpsock.connected) {
+      console.log('connect to server: ' + this.host + ':' + this.port);
+      this.tcpsock = net.connect({host: this.host, port: this.port}, elation.bind(this, this.handletcpconnect));
+      this.tcpsock.on('close', elation.bind(this, this.handletcpclose));
+      this.tcpsock.on('data', elation.bind(this, this.handletcpdata));
+      this.tcpsock.on('error', elation.bind(this, this.handletcperror));
+    } else {
+      console.log('already connected to server: ' + this.host + ':' + this.port);
     }
   }
-  this.handleconnect = function() {
+  this.reconnect = function() {
+    if (!this.reconnecttimer) {
+      console.log("reconnect in " + (this.reconnectdelay / 1000) + " seconds...");
+      this.reconnecttimer = setTimeout(elation.bind(this, this.connect), this.reconnectdelay);
+    }
+  }
+  this.send = function(data) {
+    if (this.tcpsock) {
+      var str = (data instanceof elation.irc.message ? data.raw : data);
+      console.log('server send:\n\t' + str.replace(/\n/m, "\n\t").trim());
+      try {
+        this.tcpsock.write(str + '\r\n');
+      } catch (e) {
+        console.log("FUCK", e);
+      }
+    }
+  }
+  this.handletcpconnect = function() {
     console.log('server connected: ' + this.host + ':' + this.port);
     elation.events.fire({type: 'serverconnect', element: this});
   }
-  this.handledisconnect = function() {
+  this.handletcpclose = function() {
     console.log('server disconnected: ' + this.host + ':' + this.port);
-    this.sock = false;
+    this.tcpsock = false;
+    if (!this.cancelled) {
+      this.reconnect();
+    }
   }
-  this.handledata = function(data) {
-    console.log('server data:', data.toString('utf8'));
+  this.handletcpdata = function(data) {
+    console.log('server receive:\n\t' + data.toString('utf8').replace(/\n/gm, "\n\t").trim());
     elation.events.fire({type: 'servermessage', element: this, data: new elation.irc.message(this, data.toString('utf8'))});
+  }
+  this.handletcperror = function(err) {
+    console.log("server error: " + err.code);
   }
   this.init();
 });
@@ -128,7 +156,6 @@ elation.extend("irc.relay.user", function(auth) {
   this.clients = [];
 
   this.init = function() {
-    console.log('init relay user for ' + this.user);
   }
   this.addclient = function(client) {
     console.log('add client for user ' + this.user);
@@ -144,7 +171,6 @@ elation.extend("irc.relay.user", function(auth) {
   this.addserver = function(host, port) {
     var servername = host+':'+port;
     if (!this.servers[servername]) {
-      console.log('add server: ', servername);
       this.servers[servername] = new elation.irc.relay.server(host, port, auth);
       elation.events.add(this.servers[servername], 'serverconnect,servermessage,serverclose', this);
     } else {
@@ -152,10 +178,10 @@ elation.extend("irc.relay.user", function(auth) {
     }
   }
   this.routemessage = function(msg) {
+    // FIXME - to properly support multi-server, the client might need to provide more information with each message
     for (var k in this.servers) {
       return this.servers[k];
     }
-    //return this.servers[0];
   }
   this.handleEvent = function(ev) {
     if (typeof this[ev.type] == 'function') {
@@ -171,28 +197,36 @@ elation.extend("irc.relay.user", function(auth) {
       default:
         var server = this.routemessage(msg);
         if (server) {
-          server.send(msg);
+          try {
+            server.send(msg);
+          } catch (e) {
+            console.log("ERROR relaying from client to server", e);
+          }
         }
     }
   }
   this.clientclose = function(ev) {
-    console.log('client disconnected!', ev.target);
+    console.log('client disconnected: ', this.nick);
     this.removeclient(ev.target);
   }
   this.serverconnect = function(ev) {
-    console.log('really connected now', this);
+    var server = ev.target;
     ev.target.send('NICK ' + this.nick);
     ev.target.send('USER ' + this.user + ' ' + this.user + ' ' + this.user + ' ' + this.user);
 /*
     for (var i = 0; i < this.queue.length; i++) {
-      this.netsock.write(this.queue[i].raw + '\r\n');
+      this.tcpsock.write(this.queue[i].raw + '\r\n');
     }
 */
   }
   this.servermessage = function(ev) {
     var msg = ev.data;
     for (var i in this.clients) {
-      this.clients[i].send(msg);
+      try {
+        this.clients[i].send(msg);
+      } catch (e) {
+        console.log("ERROR relaying from server to client:", e);
+      }
     }
   }
   this.serverclose = function(data) {

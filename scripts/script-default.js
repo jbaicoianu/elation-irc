@@ -1,8 +1,8 @@
 elation.extend("irc.scripts.default", new function() {
   this.styles = {
     'irc.style.timestamp'   : '<span class="elation_irc_timestamp">{time.hour}:{time.minute}</span>',
-    'irc.style.link'        : '<a href="{url}" target="_blank">{url}</a>',
-    'irc.style.misc'        : '{payload}',
+    'irc.style.link'        : '<a href="{url}" target="_blank">{?text}{text}{:else}{url}{/text}</a>',
+    'irc.style.misc'        : '{payload|s|colorize|urlize}',
     'irc.style.error'       : '{payload}',
     'irc.style.ping'        : 'POING',
     'irc.style.clear'       : '',
@@ -13,8 +13,8 @@ elation.extend("irc.scripts.default", new function() {
     'irc.style.part'        : '-!- {src.nick} [{src.ident}@{src.host}] has left {args[0]}',
     'irc.style.quit'        : '-!- {src.nick} [{src.ident}@{src.host}] has quit [{payload}]',
     'irc.style.msg'         : '<span class="elation_irc_user">{src.nick}</span> {payload|s|colorize|urlize}',
-    'irc.style.notice'      : '<span class="elation_irc_user">{src.nick}!{src.ident}@{src.host}</span> {payload}',
-    'irc.style.servernotice': '<span class="elation_irc_server">{src.nick}</span> {payload}',
+    'irc.style.notice'      : '<span class="elation_irc_user">{src.nick}!{src.ident}@{src.host}</span> {payload|s|colorize|urlize}',
+    'irc.style.servernotice': '<span class="elation_irc_server">{src.nick}</span> {payload|s|colorize|urlize}',
     'irc.style.topic'       : '-!- {src.display} changed topic of {channel} to {payload|s|colorize|urlize}',
     'irc.style.chantopic'   : '-!- topic for {args[1]}: {payload|s|colorize|urlize}',
     'irc.style.chantopicby' : '-!- topic set by {args[2]} at {args[3]}',
@@ -146,6 +146,11 @@ console.log(channel, win);
     'clear': function(ev) {
       var msg = ev.data;
       msg.channel.clear();
+    },
+    'nick': function(ev) {
+      var msg = ev.data;
+      self.nick = ev.data.payload;
+      msg.server.send("NICK " + self.nick);
     }
 
   };

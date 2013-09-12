@@ -1,4 +1,4 @@
-var elation = require('elation');
+var elation = require('utils/elation');
 require('irc/relay');
 require('irc/user');
 

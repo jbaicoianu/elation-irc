@@ -1,6 +1,5 @@
 .elation_irc_messages {
   width: auto;
-  height: 20em;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -9,6 +8,11 @@
   font-family: monospace;
   white-space: pre-wrap;
   word-wrap: break-word;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
 }
 .elation_irc_messages.elation_irc_messages_group {
   margin-right: 10em;

@@ -1,5 +1,5 @@
 if (typeof require != 'undefined') {
-  var elation = require("elation");
+  var elation = require("utils/elation");
 }
 
 elation.extend("irc.user", function(userstring) {
