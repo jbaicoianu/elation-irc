@@ -5,7 +5,7 @@
 {dependency name="utils.template"}
 {dependency name="irc"}
 
-<div class="elation_irc_client" elation:component="irc.client">
+<div class="elation_irc_client" data-elation-component="irc.client">
   {component name="irc.connect" host=$host port=$port nick=$nick}
 </div>
 
