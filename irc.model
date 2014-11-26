@@ -1,0 +1,54 @@
+{
+  "name": "irc",
+  "classes": {
+    "irc_server": {
+      "table": "irc.server",
+      "props": {
+        "servername": ["servername", "varchar(255)", {"pk": true}],
+        "host": ["host", "varchar(255)"],
+        "port": ["port", "int"],
+        "usessl": ["usessl", "tinyint"]
+      }
+    },
+    "irc_nick": {
+      "table": "irc.nick",
+      "props": {
+        "servername": ["servername", "varchar(255)", {"pk": true}],
+        "nickname": ["nickname", "varchar(255)", {"pk": true}],
+        "username": ["username", "varchar(255)"],
+        "hostname": ["hostname", "varchar(255)"],
+        "ircname": ["ircname", "varchar(255)"]
+      }
+    },
+    "irc_channel": {
+      "table": "irc.channel",
+      "props": {
+        "servername": ["servername", "varchar(255)", {"pk": true}],
+        "channelname": ["channelname", "varchar(255)", {"pk": true}],
+        "mode": ["mode", "varchar(255)"],
+        "timestamp": ["timestamp", "int"]
+      }
+    },
+    "irc_channel_nick": {
+      "table": "irc.channel_nick",
+      "props": {
+        "servername": ["servername", "varchar(255)", {"pk": true}],
+        "channelname": ["channelname", "varchar(255)", {"pk": true}],
+        "nickname": ["nickname", "varchar(255)", {"pk": true}],
+        "mode": ["mode", "varchar(255)"]
+      }
+    },
+    "irc_channel_message": {
+      "table": "irc.channel_message",
+      "props": {
+        "channelname": ["channelname", "varchar(255)", {"pk": true}],
+        "nickname": ["nickname", "varchar(255)"],
+        "username": ["username", "varchar(255)"],
+        "hostname": ["hostname", "varchar(255)"],
+        "timestamp": ["timestamp", "int"],
+        "text": ["text", "text"]
+      }
+    }
+  }
+}
+
